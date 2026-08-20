@@ -1,0 +1,15 @@
+[
+  {
+    "project_name": "Sample Finance Explainer",
+    "scenes": [
+      {
+        "narration": "India's markets opened higher as forex reserves hit a new record.",
+        "image_prompt": "A cinematic illustration of the Reserve Bank of India with glowing currency symbols"
+      },
+      {
+        "narration": "Investors watched the new tax slab announcements carefully.",
+        "image_prompt": "A clean infographic of tax slabs with rupee icons and charts"
+      }
+    ]
+  }
+]

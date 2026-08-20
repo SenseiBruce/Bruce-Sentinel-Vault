@@ -1,65 +1,74 @@
-import os
+"""CLI entrypoint for the Grader Agent fact-checking pipeline."""
+
+from __future__ import annotations
+
 import json
+import logging
+import os
 import sys
+from pathlib import Path
+
+# Allow running as `python grader-agent/src/main.py` from repo root or this dir.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 from graph import run_grader_logic
 
-def main():
-    print("📡 [Agentic Sentinel] Initializing Fact-Checking Protocol...")
-    
-    # 1. Load News Input (In real use, this could be from a file or web search)
-    input_file = "news_input.json"
+logger = logging.getLogger(__name__)
+
+
+def load_news_items(input_file: str = "news_input.json") -> list[dict]:
     if os.path.exists(input_file):
-        with open(input_file, "r") as f:
-            news_items = json.load(f)
-    else:
-        # Fallback dummy news
-        news_items = [
-            {"title": "India's Forex reserves hit record high", "source": "RBI Report"},
-            {"title": "New 12.75L Tax Slab Confirmed by Ministry", "source": "Finance Bill 2026"},
-            {"title": "DeepSeek Coder v3 released", "source": "TechCrunch"},
-            {"title": "RBI bans new credit card issuance for HDFC", "source": "News18"}
-        ]
+        with open(input_file, encoding="utf-8") as handle:
+            return json.load(handle)
+    return [
+        {"title": "India's Forex reserves hit record high", "source": "RBI Report"},
+        {
+            "title": "New 12.75L Tax Slab Confirmed by Ministry",
+            "source": "Finance Bill 2026",
+        },
+        {"title": "DeepSeek Coder v3 released", "source": "TechCrunch"},
+        {
+            "title": "RBI bans new credit card issuance for HDFC",
+            "source": "News18",
+        },
+    ]
 
-    # 2. Route News
+
+def write_results(path: str, results: list[dict]) -> None:
+    with open(path, "w", encoding="utf-8") as handle:
+        json.dump(results, handle, indent=2)
+
+
+def main(argv=None) -> int:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+    logger.info("[Agentic Sentinel] Initializing Fact-Checking Protocol")
+
+    news_items = load_news_items()
     routed_items = run_grader_logic("route", news_items)
-    print(f"✅ Router selected {len(routed_items)} relevant items.")
+    logger.info("Router selected %s relevant items", len(routed_items))
 
-    # 3. Process & Grade
     results = []
     for item in routed_items:
-        print(f"\n--- Processing: {item['title']} ---")
-        
-        # Grade Factual Grounding
-        status, reason = run_grader_logic("grade", item['title'], item.get('source', ""))
-        
-        # Hallucination Check
-        h_status = run_grader_logic("check_hallucination", item['title'], item.get('source', ""))
-        
+        logger.info("Processing: %s", item["title"])
+        status, reason = run_grader_logic("grade", item["title"], item.get("source", ""))
+        h_status = run_grader_logic(
+            "check_hallucination", item["title"], item.get("source", "")
+        )
+
         if status == "YES" and h_status == "SAFE":
-            print(f"🛡️ [Sentinel Verdict] PASSED: {reason}")
+            logger.info("[Sentinel Verdict] PASSED: %s", reason)
             results.append({**item, "verdict": "PASSED"})
         else:
-            print(f"❌ [Sentinel Verdict] FAILED: {reason}")
+            logger.info("[Sentinel Verdict] FAILED: %s", reason)
             results.append({**item, "verdict": "FAILED"})
 
-    # 4. Export results
-    with print_to_file("grader_results.json"):
-        print(json.dumps(results, indent=2))
-    
-    print("\n🏁 Scan Complete. Results saved to grader_results.json")
+    write_results("grader_results.json", results)
+    logger.info("Scan complete. Results saved to grader_results.json")
+    return 0
 
-class print_to_file:
-    def __init__(self, filename):
-        self.filename = filename
-        self.file = None
-
-    def __enter__(self):
-        self.file = open(self.filename, "w")
-        return self.file
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.file:
-            self.file.close()
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

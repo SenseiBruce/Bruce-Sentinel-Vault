@@ -5,13 +5,22 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import sys
 from collections.abc import Callable
+from pathlib import Path
 
 import requests
+
+# Repo root on sys.path for shared logging helper.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_OLLAMA_URL = "http://localhost:11434/api/generate"
+
+
+class OllamaError(RuntimeError):
+    """Raised when the local Ollama endpoint cannot be reached or responds badly."""
 
 
 def get_file_content(filepath: str) -> str:
@@ -20,7 +29,7 @@ def get_file_content(filepath: str) -> str:
             return handle.read()
     except OSError as exc:
         logger.exception("Failed to read %s", filepath)
-        return f"Error reading {filepath}: {exc}"
+        raise OllamaError(f"Error reading {filepath}: {exc}") from exc
 
 
 def parse_ollama_response(payload: dict) -> str:
@@ -68,7 +77,7 @@ Be precise, efficient, and follow best practices."""
         "stream": False,
     }
 
-    url = ollama_url or os.environ.get("OLLAMA_URL", DEFAULT_OLLAMA_URL)
+    url = ollama_url or os.environ.get("OLLAMA_URL") or DEFAULT_OLLAMA_URL
     http_post = post or requests.post
 
     logger.info("Shadow-Coder is thinking (using %s)...", model)
@@ -76,16 +85,17 @@ Be precise, efficient, and follow best practices."""
         response = http_post(url, json=payload, timeout=300)
         response.raise_for_status()
         return parse_ollama_response(response.json())
+    except OllamaError:
+        raise
     except Exception as exc:
         logger.exception("Error connecting to Ollama at %s", url)
-        return f"Error connecting to Ollama: {exc}"
+        raise OllamaError(f"Error connecting to Ollama: {exc}") from exc
 
 
 def main(argv=None) -> int:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    from sentinel_logging import configure_logging
+
+    configure_logging()
     parser = argparse.ArgumentParser(description="Shadow-Coder: Local Coding Assistant")
     parser.add_argument("--task", required=True, help="The coding task to perform")
     parser.add_argument(
@@ -104,7 +114,11 @@ def main(argv=None) -> int:
     if args.files:
         file_list = [f.strip() for f in args.files.split(",") if f.strip()]
 
-    response = run_shadow_coder(args.task, file_list, args.model)
+    try:
+        response = run_shadow_coder(args.task, file_list, args.model)
+    except OllamaError as exc:
+        logger.error("%s", exc)
+        return 1
     print("\n--- SHADOW-CODER OUTPUT ---")
     print(response)
     print("\n--- END OF OUTPUT ---")

@@ -5,10 +5,17 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "shadow-coder"))
 
-from coder import get_file_content, parse_ollama_response, run_shadow_coder  # noqa: E402
+from coder import (  # noqa: E402
+    OllamaError,
+    get_file_content,
+    parse_ollama_response,
+    run_shadow_coder,
+)
 
 
 class FakeResponse:
@@ -38,8 +45,8 @@ def test_get_file_content_reads_and_handles_missing(tmp_path):
     target = tmp_path / "sample.py"
     target.write_text("print('hi')\n", encoding="utf-8")
     assert "print('hi')" in get_file_content(str(target))
-    missing = get_file_content(str(tmp_path / "nope.py"))
-    assert missing.startswith("Error reading")
+    with pytest.raises(OllamaError, match="Error reading"):
+        get_file_content(str(tmp_path / "nope.py"))
 
 
 def test_run_shadow_coder_posts_payload_and_parses_response(tmp_path):
@@ -69,10 +76,9 @@ def test_run_shadow_coder_posts_payload_and_parses_response(tmp_path):
     assert captured["timeout"] == 300
 
 
-def test_run_shadow_coder_returns_error_string_on_http_failure():
+def test_run_shadow_coder_raises_on_http_failure():
     def boom_post(url, json=None, timeout=None):
         raise ConnectionError("refused")
 
-    result = run_shadow_coder("task", [], post=boom_post)
-    assert result.startswith("Error connecting to Ollama:")
-    assert "refused" in result
+    with pytest.raises(OllamaError, match="refused"):
+        run_shadow_coder("task", [], post=boom_post)

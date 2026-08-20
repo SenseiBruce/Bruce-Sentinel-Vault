@@ -7,9 +7,12 @@ import json
 import logging
 import os
 from pathlib import Path
+from typing import Any
 
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
+
+from sentinel_logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +53,32 @@ class YouTubeAuditor:
             raise TokenError("YouTube credentials are not loaded.")
         return build("youtube", "v3", credentials=self.credentials)
 
+    def _uploads_playlist_id(self) -> str:
+        youtube = self._youtube()
+        response = youtube.channels().list(part="contentDetails", mine=True).execute()
+        return response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
+
+    def _list_upload_items(self, max_results: int) -> list[dict[str, Any]]:
+        youtube = self._youtube()
+        playlist_id = self._uploads_playlist_id()
+        response = (
+            youtube.playlistItems()
+            .list(
+                part="snippet,contentDetails,status",
+                playlistId=playlist_id,
+                maxResults=max_results,
+            )
+            .execute()
+        )
+        return list(response.get("items", []))
+
     def get_channel_summary(self):
         youtube = self._youtube()
-        request = youtube.channels().list(
-            part="snippet,contentDetails,statistics", mine=True
+        response = (
+            youtube.channels()
+            .list(part="snippet,contentDetails,statistics", mine=True)
+            .execute()
         )
-        response = request.execute()
 
         if not response.get("items"):
             logger.error("No channel found for authenticated account")
@@ -82,28 +105,12 @@ class YouTubeAuditor:
 
     def list_pipeline(self, max_results=10):
         youtube = self._youtube()
-        request = youtube.channels().list(part="contentDetails", mine=True)
-        response = request.execute()
-        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"][
-            "uploads"
-        ]
-
-        request = youtube.playlistItems().list(
-            part="snippet,contentDetails,status",
-            playlistId=uploads_playlist_id,
-            maxResults=max_results,
-        )
-        response = request.execute()
-
         pipeline = []
-        for item in response.get("items", []):
+        for item in self._list_upload_items(max_results):
             video_id = item["contentDetails"]["videoId"]
             title = item["snippet"]["title"]
-
-            vid_req = youtube.videos().list(part="status,snippet", id=video_id)
-            vid_res = vid_req.execute()
-            v_item = vid_res["items"][0]
-            status = v_item["status"]
+            vid_res = youtube.videos().list(part="status,snippet", id=video_id).execute()
+            status = vid_res["items"][0]["status"]
             privacy = status["privacyStatus"]
             pub_at = status.get("publishAt", "N/A")
             entry = {
@@ -122,27 +129,12 @@ class YouTubeAuditor:
 
     def get_detailed_stats(self, max_results=15):
         youtube = self._youtube()
-        request = youtube.channels().list(part="contentDetails", mine=True)
-        response = request.execute()
-        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"][
-            "uploads"
-        ]
-
-        request = youtube.playlistItems().list(
-            part="snippet,contentDetails,status",
-            playlistId=uploads_playlist_id,
-            maxResults=max_results,
-        )
-        response = request.execute()
-
         stats_rows = []
-        for item in response.get("items", []):
+        for item in self._list_upload_items(max_results):
             video_id = item["contentDetails"]["videoId"]
             title = item["snippet"]["title"]
             privacy = item["status"]["privacyStatus"]
-
-            vid_req = youtube.videos().list(part="statistics", id=video_id)
-            vid_res = vid_req.execute()
+            vid_res = youtube.videos().list(part="statistics", id=video_id).execute()
             stats = vid_res["items"][0].get("statistics", {})
             row = {
                 "video_id": video_id,
@@ -163,10 +155,7 @@ class YouTubeAuditor:
 
 
 def main(argv=None):
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    configure_logging()
     parser = argparse.ArgumentParser(description="YouTube channel auditor")
     parser.add_argument(
         "--token-file",

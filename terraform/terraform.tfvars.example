@@ -1,0 +1,6 @@
+# Example tfvars for local development. Copy to terraform.tfvars as needed.
+project_name = "bruce-sentinel-vault"
+image_name   = "bruce-sentinel-vault"
+image_tag    = "0.1.1"
+replicas     = 1
+environment  = "local"

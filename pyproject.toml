@@ -1,16 +1,19 @@
 [project]
 name = "bruce-sentinel-vault"
-version = "0.1.0"
-description = "Sentinel tooling: video factory, YouTube auditor, grader agent, shadow-coder"
+version = "0.1.1"
+description = "Python automation toolkit + deploy IaC for Bruce Sentinel Vault (video factory, YouTube auditor, grader agent, shadow-coder)"
 readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = ["python", "automation", "toolkit", "grader", "youtube", "ollama"]
 dependencies = [
-  "requests==2.32.3",
+  "requests==2.34.2",
   "google-api-python-client==2.160.0",
   "google-auth==2.38.0",
   "google-auth-oauthlib==1.2.1",
   "duckduckgo-search==7.3.2",
-  "runware==0.4.0",
+  "runware==0.5.24",
+  "pydantic==2.10.6",
 ]
 
 [project.optional-dependencies]
@@ -18,7 +21,41 @@ dev = [
   "pytest==8.3.4",
   "pytest-cov==6.0.0",
   "ruff==0.9.4",
+  "mypy==1.14.1",
+  "types-requests==2.32.0.20241016",
+  "pip-audit==2.8.0",
+  "pre-commit==4.1.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/SenseiBruce/Bruce-Sentinel-Vault"
+Repository = "https://github.com/SenseiBruce/Bruce-Sentinel-Vault"
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+requests = "2.34.2"
+google-api-python-client = "2.160.0"
+google-auth = "2.38.0"
+google-auth-oauthlib = "1.2.1"
+duckduckgo-search = "7.3.2"
+runware = "0.5.24"
+pydantic = "2.10.6"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.4"
+pytest-cov = "6.0.0"
+ruff = "0.9.4"
+mypy = "1.14.1"
+types-requests = "2.32.0.20241016"
+pip-audit = "2.8.0"
+pre-commit = "4.1.0"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -28,8 +65,23 @@ addopts = "-q"
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-exclude = [".venv", "venv", "__pycache__"]
+exclude = [".venv", "venv", "__pycache__", "terraform"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
+pretty = true
+exclude = ["(?x)(^\\.venv/|^terraform/)"]
+files = [
+  "produce_video.py",
+  "YouTubeAuditor.py",
+  "shadow-coder/coder.py",
+  "grader-agent/src",
+  "sentinel_logging.py",
+  "health.py",
+]

@@ -42,3 +42,4 @@ terraform/backend.hcl
 crash.log
 
 gitleaks
+.terraform/

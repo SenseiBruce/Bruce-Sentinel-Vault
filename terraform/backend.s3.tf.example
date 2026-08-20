@@ -1,0 +1,7 @@
+# Optional remote state. Rename to backend.tf after filling backend.hcl.
+# terraform init -backend-config=backend.hcl
+terraform {
+  backend "s3" {
+    encrypt = true
+  }
+}

@@ -36,6 +36,10 @@ news_input.json
 .vscode/
 .DS_Store
 *.swp
-.terraform/
-terraform/modules/**/generated/
+terraform/backend.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+
 gitleaks
+.terraform/

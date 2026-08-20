@@ -20,9 +20,10 @@ class HealthStatus:
 def build_health(
     *,
     scripts_file: str | None = None,
-    version: str = "0.1.2",
+    version: str | None = None,
 ) -> HealthStatus:
     """Return a structured health payload without calling external APIs."""
+    resolved_version = version or os.environ.get("SENTINEL_VERSION") or "0.1.4"
     checks: dict[str, str] = {
         "python": "ok",
         "cwd": "ok" if Path.cwd().exists() else "fail",
@@ -33,7 +34,7 @@ def build_health(
     return HealthStatus(
         status=status,
         service="bruce-sentinel-vault",
-        version=version,
+        version=resolved_version,
         checks=checks,
     )
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -16,6 +17,7 @@ from graph import run_grader_logic
 from schemas import SchemaError, parse_news_items
 
 from sentinel_logging import configure_logging
+from sentinel_metrics import MetricsRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +51,27 @@ def write_results(path: str, results: list[dict]) -> None:
         json.dump(results, handle, indent=2)
 
 
-def main(argv=None) -> int:
+def main(argv: list[str] | None = None) -> int:
     configure_logging()
+    parser = argparse.ArgumentParser(description="Grader Agent fact-checking pipeline")
+    parser.add_argument(
+        "--input",
+        default="news_input.json",
+        help="Path to news JSON list (falls back to built-in samples if missing)",
+    )
+    parser.add_argument(
+        "--output",
+        default="grader_results.json",
+        help="Where to write verdict JSON",
+    )
+    args = parser.parse_args(argv)
+
+    metrics = MetricsRegistry()
     logger.info("[Agentic Sentinel] Initializing Fact-Checking Protocol")
 
-    news_items = load_news_items()
+    news_items = load_news_items(args.input)
     routed_items = run_grader_logic("route", news_items)
+    metrics.incr("grader.routed", len(routed_items))
     logger.info("Router selected %s relevant items", len(routed_items))
 
     results = []
@@ -67,13 +84,19 @@ def main(argv=None) -> int:
 
         if status == "YES" and h_status == "SAFE":
             logger.info("[Sentinel Verdict] PASSED: %s", reason)
+            metrics.incr("grader.passed")
             results.append({**item, "verdict": "PASSED"})
         else:
             logger.info("[Sentinel Verdict] FAILED: %s", reason)
+            metrics.incr("grader.failed")
             results.append({**item, "verdict": "FAILED"})
 
-    write_results("grader_results.json", results)
-    logger.info("Scan complete. Results saved to grader_results.json")
+    write_results(args.output, results)
+    logger.info(
+        "Scan complete. Results=%s metrics=%s",
+        args.output,
+        metrics.snapshot(),
+    )
     return 0
 
 

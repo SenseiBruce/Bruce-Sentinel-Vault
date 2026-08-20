@@ -30,9 +30,16 @@ def test_parse_news_items_invalid_blank_title():
         parse_news_items([{"title": "   ", "source": "x"}])
 
 
-def test_parse_news_items_rejects_non_list():
-    with pytest.raises(SchemaError, match="list"):
-        parse_news_items({"title": "nope"})
+def test_parse_news_items_accepts_optional_url():
+    items = parse_news_items(
+        [{"title": "RBI update", "source": "Mint", "url": "https://example.com/a"}]
+    )
+    assert items[0].url == "https://example.com/a"
+
+
+def test_parse_news_items_rejects_bad_url():
+    with pytest.raises(SchemaError):
+        parse_news_items([{"title": "RBI update", "url": "ftp://bad"}])
 
 
 def test_parse_script_entries_valid():

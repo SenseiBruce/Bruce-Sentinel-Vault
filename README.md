@@ -45,6 +45,9 @@ pytest -q
 ruff check .
 mypy
 pip-audit -r requirements.txt
+# Offline / coverage gates used in CI:
+# pytest -q --disable-socket --allow-hosts=127.0.0.1 --cov=. --cov-fail-under=70
+./scripts/verify_fresh_install.sh
 ```
 
 CI runs lint, mypy, pip-audit, gitleaks, pytest (Python 3.11/3.12), and Terraform

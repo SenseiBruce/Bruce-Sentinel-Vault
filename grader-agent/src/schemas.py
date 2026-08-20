@@ -13,6 +13,7 @@ class NewsItem(BaseModel):
     title: str = Field(min_length=1, max_length=500)
     source: str = Field(default="", max_length=4000)
     reasoning: str | None = None
+    url: str | None = Field(default=None, max_length=2000)
 
     @field_validator("title")
     @classmethod
@@ -21,6 +22,15 @@ class NewsItem(BaseModel):
         if not cleaned:
             raise ValueError("title must not be blank")
         return cleaned
+
+    @field_validator("url")
+    @classmethod
+    def url_must_be_http_when_set(cls, value: str | None) -> str | None:
+        if value is None or value == "":
+            return None
+        if not (value.startswith("http://") or value.startswith("https://")):
+            raise ValueError("url must start with http:// or https://")
+        return value
 
 
 class Scene(BaseModel):

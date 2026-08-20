@@ -80,11 +80,19 @@ Be precise, efficient, and follow best practices."""
     url = ollama_url or os.environ.get("OLLAMA_URL") or DEFAULT_OLLAMA_URL
     http_post = post or requests.post
 
-    logger.info("Shadow-Coder is thinking (using %s)...", model)
-    try:
+    def _once():
         response = http_post(url, json=payload, timeout=300)
         response.raise_for_status()
         return parse_ollama_response(response.json())
+
+    logger.info("Shadow-Coder is thinking (using %s)...", model)
+    try:
+        from sentinel_retry import RetryError, retry_call
+
+        return retry_call(_once, attempts=2, base_delay=0.01, retry_on=(Exception,))
+    except RetryError as exc:
+        logger.exception("Error connecting to Ollama at %s", url)
+        raise OllamaError(f"Error connecting to Ollama: {exc}") from exc
     except OllamaError:
         raise
     except Exception as exc:

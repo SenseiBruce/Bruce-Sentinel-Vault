@@ -1,0 +1,7 @@
+# Copy to backend.hcl (gitignored) and fill with non-secret project values.
+# Do NOT put AWS keys here — use the environment / IAM role.
+bucket         = "bruce-sentinel-vault-tfstate"
+key            = "sentinel/terraform.tfstate"
+region         = "ap-south-1"
+dynamodb_table = "bruce-sentinel-vault-tflock"
+encrypt        = true

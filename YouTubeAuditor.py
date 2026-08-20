@@ -162,12 +162,18 @@ def main(argv=None):
         default=default_token_file(),
         help="Path to OAuth token JSON (or set YOUTUBE_TOKEN_FILE)",
     )
+    parser.add_argument(
+        "--max-results",
+        type=int,
+        default=10,
+        help="Max uploads to inspect for pipeline/stats",
+    )
     args = parser.parse_args(argv)
 
     auditor = YouTubeAuditor(token_file=args.token_file)
     auditor.get_channel_summary()
-    auditor.list_pipeline()
-    auditor.get_detailed_stats()
+    auditor.list_pipeline(max_results=args.max_results)
+    auditor.get_detailed_stats(max_results=args.max_results)
 
 
 if __name__ == "__main__":

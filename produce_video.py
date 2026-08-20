@@ -180,7 +180,7 @@ class VideoFactory:
             )
         return YouTube(f"prod-{index}", "factory", "", topic, "English")
 
-    def produce(self, index):
+    def produce(self, index, *, dry_run: bool = False):
         if index < 1 or index > len(self.scripts):
             raise ConfigurationError(
                 f"Invalid index: {index}. Range: 1-{len(self.scripts)}"
@@ -190,7 +190,13 @@ class VideoFactory:
         topic = entry.get("project_name", f"Video_{index}")
         scenes = entry.get("scenes", [])
 
-        logger.info("[VideoFactory] Building: %s", topic)
+        logger.info("[VideoFactory] Building: %s (dry_run=%s)", topic, dry_run)
+        if dry_run:
+            return {
+                "topic": topic,
+                "scene_count": len(scenes),
+                "dry_run": True,
+            }
 
         youtube = self._build_youtube(index, topic)
         video_slug = f"video_{index}_{topic.replace(' ', '_')[:30]}"
@@ -252,10 +258,17 @@ def main(argv=None):
         default=default_scripts_file(),
         help="Scripts JSON path (default: SCRIPTS_FILE or ./scripts.example.json)",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate scripts and print plan without calling external APIs",
+    )
     args = parser.parse_args(argv)
 
     factory = VideoFactory(args.file)
-    factory.produce(args.index)
+    result = factory.produce(args.index, dry_run=args.dry_run)
+    if args.dry_run:
+        print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

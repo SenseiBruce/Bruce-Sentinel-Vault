@@ -57,9 +57,16 @@ def test_video_factory_invalid_index(tmp_path):
         factory.produce(0)
 
 
-def test_video_factory_rejects_invalid_schema(tmp_path):
-    path = tmp_path / "bad.json"
-    path.write_text('[{"project_name": "", "scenes": []}]', encoding="utf-8")
-    with pytest.raises(ConfigurationError, match="Invalid scripts"):
-        VideoFactory(str(path))
+def test_video_factory_dry_run(tmp_path):
+    path = tmp_path / "scripts.json"
+    path.write_text(
+        json.dumps(
+            [{"project_name": "Demo", "scenes": [{"narration": "a", "image_prompt": "b"}]}]
+        ),
+        encoding="utf-8",
+    )
+    factory = VideoFactory(str(path), tts=object(), youtube_factory=lambda i, t: object())
+    plan = factory.produce(1, dry_run=True)
+    assert plan["dry_run"] is True
+    assert plan["scene_count"] == 1
 

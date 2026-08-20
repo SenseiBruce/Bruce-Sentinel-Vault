@@ -1,5 +1,3 @@
-# Core
-google-api-python-client
-duckduckgo-search
-langchain
-crewai
+# Prefer root requirements.txt / requirements-dev.txt.
+# Kept for backward compatibility with older skill docs.
+-r ../requirements.txt

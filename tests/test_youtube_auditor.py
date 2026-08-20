@@ -43,11 +43,11 @@ class FakeYouTube:
         }
 
     def channels(self):
-        parent = self
+        payload = self.channel_payload
 
         class Channels:
             def list(self, **kwargs):
-                return FakeExecute(parent.channel_payload)
+                return FakeExecute(payload)
 
         return Channels()
 
@@ -68,3 +68,50 @@ def test_get_channel_summary_with_injected_client():
     summary = auditor.get_channel_summary()
     assert summary["title"] == "Capital Architects"
     assert summary["subscribers"] == "1000"
+
+
+def test_list_pipeline_with_injected_client():
+    class RichFake(FakeYouTube):
+        def playlistItems(self):
+
+            class Playlist:
+                def list(self, **kwargs):
+                    return FakeExecute(
+                        {
+                            "items": [
+                                {
+                                    "contentDetails": {"videoId": "abc"},
+                                    "snippet": {"title": "Tax Explainer"},
+                                    "status": {"privacyStatus": "public"},
+                                }
+                            ]
+                        }
+                    )
+
+            return Playlist()
+
+        def videos(self):
+            class Videos:
+                def list(self, **kwargs):
+                    return FakeExecute(
+                        {
+                            "items": [
+                                {
+                                    "status": {
+                                        "privacyStatus": "public",
+                                        "publishAt": "N/A",
+                                    },
+                                    "snippet": {"title": "Tax Explainer"},
+                                    "statistics": {"viewCount": "9", "likeCount": "2"},
+                                }
+                            ]
+                        }
+                    )
+
+            return Videos()
+
+    auditor = YouTubeAuditor(youtube_client=RichFake())
+    pipeline = auditor.list_pipeline(max_results=1)
+    assert pipeline[0]["video_id"] == "abc"
+    stats = auditor.get_detailed_stats(max_results=1)
+    assert stats[0]["views"] == "9"

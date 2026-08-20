@@ -11,11 +11,15 @@ This is a **public** project. Do not commit:
 Use `.env.example` for variable **names** only. Real values stay in a local
 gitignored `.env`.
 
-## Reporting a leak
+## If credentials were ever committed
 
-1. Rotate the exposed credential with the provider immediately.
-2. Open an issue (without pasting the secret) or email the maintainer.
-3. We will scrub history and force-push if needed.
+Force-pushing rewritten history removes secrets from branch tips, but **GitHub may
+still serve old commit SHAs** that were referenced by pull requests or forks.
+
+1. **Rotate every exposed key immediately** with the provider (treat it as burned).
+2. Optionally ask GitHub Support to purge unreachable commits, or recreate the
+   repository if you need the old SHAs gone from `api.github.com` as well.
+
 
 ## Automated guards
 

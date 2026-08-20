@@ -1,6 +1,6 @@
 [project]
 name = "bruce-sentinel-vault"
-version = "0.1.2"
+version = "0.1.3"
 description = "Python automation toolkit + deploy IaC for Bruce Sentinel Vault (video factory, YouTube auditor, grader agent, shadow-coder)"
 readme = "README.md"
 requires-python = ">=3.11"

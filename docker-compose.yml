@@ -1,0 +1,28 @@
+services:
+  vault:
+    build: .
+    image: bruce-sentinel-vault:0.1.1
+    working_dir: /app
+    command: ["python", "health.py"]
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./scripts.example.json:/app/scripts.example.json:ro
+    healthcheck:
+      test: ["CMD", "python", "health.py"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional local LLM for shadow-coder. Pull only when explicitly profiled.
+  ollama:
+    profiles: ["ollama"]
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:

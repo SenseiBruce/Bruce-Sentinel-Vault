@@ -1,0 +1,41 @@
+# Environment & secrets
+.env
+.env.local
+*.pem
+*_token.json
+youtube_token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+.envrc
+
+# Test / coverage / lint caches
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# Runtime artifacts
+.mp/
+*.mp4
+*.png
+grader_results.json
+news_input.json
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+*.swp
+.terraform/
+terraform/modules/**/generated/
+gitleaks

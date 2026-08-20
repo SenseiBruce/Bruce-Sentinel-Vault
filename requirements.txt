@@ -1,0 +1,8 @@
+# Runtime dependencies for Bruce Sentinel Vault components.
+requests==2.34.2
+google-api-python-client==2.160.0
+google-auth==2.38.0
+google-auth-oauthlib==1.2.1
+duckduckgo-search==7.3.2
+runware==0.5.24
+pydantic==2.10.6

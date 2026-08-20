@@ -1,0 +1,7 @@
+title = "gitleaks config"
+[allowlist]
+description = "Scan current tree in CI; history purge is a coordinated ops step"
+paths = [
+  '''\.venv/.*''',
+  '''terraform/\.terraform/.*''',
+]

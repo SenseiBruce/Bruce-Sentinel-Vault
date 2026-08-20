@@ -1,0 +1,17 @@
+{
+  "name": "Bruce Sentinel Vault",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "vault",
+  "workspaceFolder": "/app",
+  "forwardPorts": [11434],
+  "postCreateCommand": "pip install -r requirements-dev.txt && pip install -r requirements.lock",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "hashicorp.terraform"
+      ]
+    }
+  }
+}

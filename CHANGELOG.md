@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.4
+
+- Network-isolated pytest (`pytest-socket`) and coverage gate at 70%.
+- Fresh-install verification script + CI job.
+- Grader CLI `--input/--output`, optional news URLs, video `--dry-run`.
+- Path sanitizer, rate limiter, auditor `--max-results`, health version env.
+- Terraform module split (versions/variables/outputs) + plan in CI.
+
+## 0.1.3
+
+- Public-safe baseline: orphan history with no secret-bearing commits.
+- Add SECURITY.md; scrub TOOLS.md and `.env.example` of any key material.
+- Document hard rule: no hardcoded secrets on this public repository.
+
 ## 0.1.2
 
 - Purge leaked Runware/Maton key material from git history; scrub TOOLS.md.

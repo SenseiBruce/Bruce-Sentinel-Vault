@@ -55,3 +55,11 @@ def test_video_factory_invalid_index(tmp_path):
     factory = VideoFactory(str(path), tts=object(), youtube_factory=lambda i, t: object())
     with pytest.raises(ConfigurationError, match="Invalid index"):
         factory.produce(0)
+
+
+def test_video_factory_rejects_invalid_schema(tmp_path):
+    path = tmp_path / "bad.json"
+    path.write_text('[{"project_name": "", "scenes": []}]', encoding="utf-8")
+    with pytest.raises(ConfigurationError, match="Invalid scripts"):
+        VideoFactory(str(path))
+

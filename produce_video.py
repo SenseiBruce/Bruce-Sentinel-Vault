@@ -13,22 +13,32 @@ from uuid import uuid4
 
 import requests
 
+from sentinel_logging import configure_logging
+
 logger = logging.getLogger(__name__)
+
+# Prefer local schemas package when running from repo root.
+sys.path.insert(0, str(Path(__file__).resolve().parent / "grader-agent" / "src"))
+try:
+    from schemas import SchemaError, parse_script_entries
+except ImportError:  # pragma: no cover
+    SchemaError = ValueError  # type: ignore[misc, assignment]
+    parse_script_entries = None  # type: ignore[assignment]
 
 # Optional local multimedia helpers (may be absent in minimal installs).
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 try:
-    from classes.Tts import TTS  # type: ignore
-    from classes.YouTube import YouTube  # type: ignore
+    from classes.Tts import TTS
+    from classes.YouTube import YouTube
 except ImportError:  # pragma: no cover - exercised only when helpers are missing
-    YouTube = None  # type: ignore[misc, assignment]
-    TTS = None  # type: ignore[misc, assignment]
+    YouTube = None
+    TTS = None
 
 try:
     from runware import IImageInference, Runware
 except ImportError:  # pragma: no cover
-    Runware = None  # type: ignore[misc, assignment]
-    IImageInference = None  # type: ignore[misc, assignment]
+    Runware = None
+    IImageInference = None
 
 
 class ConfigurationError(RuntimeError):
@@ -149,7 +159,16 @@ class VideoFactory:
         if not os.path.exists(self.scripts_file):
             raise ConfigurationError(f"Script file not found: {self.scripts_file}")
         with open(self.scripts_file, encoding="utf-8") as handle:
-            return json.load(handle)
+            raw = json.load(handle)
+        if parse_script_entries is None:
+            if not isinstance(raw, list):
+                raise ConfigurationError("scripts JSON must be a list")
+            return raw
+        try:
+            entries = parse_script_entries(raw)
+        except SchemaError as exc:
+            raise ConfigurationError(f"Invalid scripts JSON: {exc}") from exc
+        return [entry.model_dump() for entry in entries]
 
     def _build_youtube(self, index, topic):
         if self._youtube_factory is not None:
@@ -224,10 +243,7 @@ class VideoFactory:
 
 
 def main(argv=None):
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    configure_logging()
     parser = argparse.ArgumentParser(description="Professional Video Production Factory")
     parser.add_argument("--index", type=int, required=True, help="Script index (1-based)")
     parser.add_argument(

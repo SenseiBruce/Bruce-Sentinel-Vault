@@ -12,6 +12,7 @@ on:
 
 jobs:
   validate:
+    name: terraform-validate
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -31,6 +32,9 @@ jobs:
 
       - name: Terraform validate
         run: terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -lock=false
 
       - name: Checkov
         uses: bridgecrewio/checkov-action@v12

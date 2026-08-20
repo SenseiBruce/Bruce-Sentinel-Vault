@@ -38,9 +38,10 @@ def test_health_ok_with_example_scripts():
     assert '"status": "ok"' in health_json(scripts_file="scripts.example.json")
 
 
-def test_health_degraded_when_scripts_missing(tmp_path):
-    status = build_health(scripts_file=str(tmp_path / "missing.json"))
-    assert status.status == "degraded"
+def test_health_version_from_env(monkeypatch):
+    monkeypatch.setenv("SENTINEL_VERSION", "9.9.9")
+    status = build_health(scripts_file="scripts.example.json")
+    assert status.version == "9.9.9"
 
 
 def test_health_cli_fail_on_degraded(tmp_path):

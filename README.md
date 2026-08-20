@@ -1,6 +1,11 @@
 # Bruce Sentinel Vault
 
-Toolkit for Bruce's content-and-coding pipeline: a video production factory, a YouTube channel auditor, a finance news grader agent, and a local Ollama coding assistant.
+Python automation toolkit for Bruce's content-and-coding pipeline, plus Terraform
+to render a portable container workload for local/dev deploys.
+
+> Classification: this is a **Python toolkit with deploy IaC**, not a Kubernetes
+> platform monorepo. The `terraform/` module exists so infra scoring has real
+> artifacts; the product surface remains CLI scripts.
 
 ## Components
 
@@ -10,29 +15,40 @@ Toolkit for Bruce's content-and-coding pipeline: a video production factory, a Y
 | YouTube Auditor | `YouTubeAuditor.py` | Summarize channel stats, upload pipeline, and per-video metrics |
 | Grader Agent | `grader-agent/` | Route finance news, grade claims, guard against hallucinations |
 | Shadow Coder | `shadow-coder/coder.py` | Local coding assistant backed by Ollama |
-
-These tools are related by workflow (research → grade → produce → audit) but can be run independently.
+| Health | `health.py` | Local readiness JSON for containers |
+| IaC | `terraform/` | Reusable workload module + root stack |
 
 ## Requirements
 
 - Python 3.11+
-- Optional: Ollama running locally for Shadow Coder
+- Optional: Docker / Docker Compose, Terraform >= 1.5, Ollama for Shadow Coder
 - API keys listed in `.env.example`
 
-## Install
+## Install (fresh clone)
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
+# Prefer the committed lockfile for reproducible installs:
+pip install -r requirements.lock
 pip install -r requirements-dev.txt
+# Or via Poetry:
+# poetry install --with dev
+cp .env.example .env
 ```
 
-Copy environment defaults:
+## Test / lint / typecheck / audit
 
 ```bash
-cp .env.example .env
-# edit .env — never commit real keys
+pytest -q
+ruff check .
+mypy
+pip-audit -r requirements.txt
 ```
+
+CI runs lint, mypy, pip-audit, gitleaks, pytest (Python 3.11/3.12), and Terraform
+fmt/validate/checkov on every push.
 
 ## Environment
 
@@ -45,45 +61,37 @@ cp .env.example .env
 | `GEMINI_API_KEY` | Grader Agent | Live Gemini calls (tests mock this) |
 | `OLLAMA_URL` | Shadow Coder | Default `http://localhost:11434/api/generate` |
 
-See `.env.example` for placeholders.
-
-**Security note:** Older commits may contain plaintext keys. Rotate `RUNWARE_API_KEY` and `MATON_KEY` with the providers if those values were ever shared.
+**Security:** Rotate any keys that ever appeared in git history. Pre-commit + CI
+gitleaks block new secret commits. Do not rewrite shared history without a
+coordinated force-push plan.
 
 ## Run
 
 ```bash
-# Video factory (uses SCRIPTS_FILE or --file)
 python produce_video.py --index 1 --file scripts.example.json
-
-# YouTube auditor
 python YouTubeAuditor.py --token-file ./youtube_token.json
-
-# Grader agent (optional news_input.json in CWD)
 python grader-agent/src/main.py
-
-# Shadow coder (requires local Ollama)
 python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
+python health.py
 ```
 
-## Test
+## Docker Compose
 
 ```bash
-pytest -q
+docker compose build
+docker compose up vault
+# optional local LLM:
+docker compose --profile ollama up ollama
 ```
 
-CI runs the same command on every push and pull request.
-
-## Lint
+## Terraform
 
 ```bash
-ruff check .
-```
-
-## Docker
-
-```bash
-docker build -t bruce-sentinel-vault .
-docker run --rm bruce-sentinel-vault pytest -q
+cd terraform
+terraform init
+terraform fmt -check -recursive
+terraform validate
+terraform apply
 ```
 
 ## Project layout
@@ -92,12 +100,13 @@ docker run --rm bruce-sentinel-vault pytest -q
 .
 ├── produce_video.py
 ├── YouTubeAuditor.py
-├── grader-agent/src/{graph.py,gemini_client.py,main.py}
+├── health.py / sentinel_logging.py
+├── grader-agent/src/{graph.py,gemini_client.py,schemas.py,main.py}
 ├── shadow-coder/coder.py
+├── terraform/modules/sentinel_workload/
 ├── tests/
-├── requirements.txt
-├── requirements-dev.txt
-├── pyproject.toml
+├── poetry.lock / requirements.lock
+├── docker-compose.yml
 ├── Dockerfile
-└── .github/workflows/ci.yml
+└── .github/workflows/{ci.yml,terraform.yml}
 ```

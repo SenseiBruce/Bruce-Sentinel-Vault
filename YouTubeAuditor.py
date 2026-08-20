@@ -1,94 +1,141 @@
+"""YouTube channel auditor using OAuth credentials from a token file."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
 import os
+from pathlib import Path
+
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import json
-from datetime import datetime
 
-TOKEN_FILE = "/Users/kinshuk.prasad/.openclaw/workspace/youtube_token.json"
+logger = logging.getLogger(__name__)
+
+
+class TokenError(RuntimeError):
+    """Raised when the YouTube OAuth token cannot be loaded."""
+
+
+def default_token_file() -> str:
+    return os.environ.get(
+        "YOUTUBE_TOKEN_FILE",
+        str(Path(__file__).resolve().parent / "youtube_token.json"),
+    )
+
 
 class YouTubeAuditor:
-    def __init__(self):
+    def __init__(self, token_file=None, youtube_client=None):
+        self.token_file = token_file or default_token_file()
         self.credentials = None
-        self._load_credentials()
+        self._youtube_client = youtube_client
+        if youtube_client is None:
+            self._load_credentials()
 
     def _load_credentials(self):
-        if not os.path.exists(TOKEN_FILE):
-            print(f"❌ No token found at {TOKEN_FILE}. Authenticate first.")
-            return
-        with open(TOKEN_FILE, "r") as token_file:
+        if not os.path.exists(self.token_file):
+            raise TokenError(
+                f"No token found at {self.token_file}. "
+                "Set YOUTUBE_TOKEN_FILE or place youtube_token.json in the repo root."
+            )
+        with open(self.token_file, encoding="utf-8") as token_file:
             creds_data = json.load(token_file)
             self.credentials = Credentials.from_authorized_user_info(creds_data)
 
-    def get_channel_summary(self):
-        if not self.credentials: return
-        youtube = build("youtube", "v3", credentials=self.credentials)
+    def _youtube(self):
+        if self._youtube_client is not None:
+            return self._youtube_client
+        if not self.credentials:
+            raise TokenError("YouTube credentials are not loaded.")
+        return build("youtube", "v3", credentials=self.credentials)
 
-        request = youtube.channels().list(part="snippet,contentDetails,statistics", mine=True)
+    def get_channel_summary(self):
+        youtube = self._youtube()
+        request = youtube.channels().list(
+            part="snippet,contentDetails,statistics", mine=True
+        )
         response = request.execute()
-        
-        if not response["items"]:
-            print("❌ No channel found.")
-            return
+
+        if not response.get("items"):
+            logger.error("No channel found for authenticated account")
+            return None
 
         channel = response["items"][0]
         snippet = channel["snippet"]
         stats = channel["statistics"]
-
-        print(f"\n📊 **Channel Summary: {snippet['title']}**")
-        print(f"   • Subscribers: {stats.get('subscriberCount', 'Hidden')}")
-        print(f"   • Total Views: {stats.get('viewCount', '0')}")
-        print(f"   • Video Count: {stats.get('videoCount', '0')}")
-        print(f"   • Description: {snippet['description'][:100]}...")
+        summary = {
+            "title": snippet["title"],
+            "subscribers": stats.get("subscriberCount", "Hidden"),
+            "views": stats.get("viewCount", "0"),
+            "video_count": stats.get("videoCount", "0"),
+            "description": snippet.get("description", "")[:100],
+        }
+        logger.info(
+            "Channel %s — subs=%s views=%s videos=%s",
+            summary["title"],
+            summary["subscribers"],
+            summary["views"],
+            summary["video_count"],
+        )
+        return summary
 
     def list_pipeline(self, max_results=10):
-        if not self.credentials: return
-        youtube = build("youtube", "v3", credentials=self.credentials)
-
+        youtube = self._youtube()
         request = youtube.channels().list(part="contentDetails", mine=True)
         response = request.execute()
-        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-        
+        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"][
+            "uploads"
+        ]
+
         request = youtube.playlistItems().list(
             part="snippet,contentDetails,status",
             playlistId=uploads_playlist_id,
-            maxResults=max_results
+            maxResults=max_results,
         )
         response = request.execute()
 
-        print(f"\n📦 **Current Video Pipeline (Last {max_results} Uploads):**")
+        pipeline = []
         for item in response.get("items", []):
             video_id = item["contentDetails"]["videoId"]
             title = item["snippet"]["title"]
-            
+
             vid_req = youtube.videos().list(part="status,snippet", id=video_id)
             vid_res = vid_req.execute()
             v_item = vid_res["items"][0]
             status = v_item["status"]
             privacy = status["privacyStatus"]
             pub_at = status.get("publishAt", "N/A")
-            
-            print(f"   • [{privacy.upper()}] {title[:50]}")
+            entry = {
+                "video_id": video_id,
+                "title": title,
+                "privacy": privacy,
+                "publish_at": pub_at,
+            }
+            pipeline.append(entry)
+            logger.info("[%s] %s", privacy.upper(), title[:50])
             if privacy == "private" and pub_at != "N/A":
-                print(f"     └─ Scheduled for: {pub_at}")
+                logger.info("Scheduled for: %s", pub_at)
             elif privacy == "private":
-                print(f"     └─ Manual release required")
+                logger.info("Manual release required")
+        return pipeline
 
     def get_detailed_stats(self, max_results=15):
-        if not self.credentials: return
-        youtube = build("youtube", "v3", credentials=self.credentials)
-        
+        youtube = self._youtube()
         request = youtube.channels().list(part="contentDetails", mine=True)
         response = request.execute()
-        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"]["uploads"]
-        
+        uploads_playlist_id = response["items"][0]["contentDetails"]["relatedPlaylists"][
+            "uploads"
+        ]
+
         request = youtube.playlistItems().list(
             part="snippet,contentDetails,status",
             playlistId=uploads_playlist_id,
-            maxResults=max_results
+            maxResults=max_results,
         )
         response = request.execute()
 
-        print(f"\n📈 **Full Stats Audit (Last {max_results} Videos):**")
+        stats_rows = []
         for item in response.get("items", []):
             video_id = item["contentDetails"]["videoId"]
             title = item["snippet"]["title"]
@@ -97,13 +144,42 @@ class YouTubeAuditor:
             vid_req = youtube.videos().list(part="statistics", id=video_id)
             vid_res = vid_req.execute()
             stats = vid_res["items"][0].get("statistics", {})
-            views = stats.get("viewCount", "0")
-            likes = stats.get("likeCount", "0")
+            row = {
+                "video_id": video_id,
+                "title": title,
+                "privacy": privacy,
+                "views": stats.get("viewCount", "0"),
+                "likes": stats.get("likeCount", "0"),
+            }
+            stats_rows.append(row)
+            logger.info(
+                "[%s] %s... | Views: %s | Likes: %s",
+                privacy.upper(),
+                title[:40],
+                row["views"],
+                row["likes"],
+            )
+        return stats_rows
 
-            print(f"   • [{privacy.upper()}] {title[:40]}... | Views: {views} | Likes: {likes}")
 
-if __name__ == "__main__":
-    auditor = YouTubeAuditor()
+def main(argv=None):
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    )
+    parser = argparse.ArgumentParser(description="YouTube channel auditor")
+    parser.add_argument(
+        "--token-file",
+        default=default_token_file(),
+        help="Path to OAuth token JSON (or set YOUTUBE_TOKEN_FILE)",
+    )
+    args = parser.parse_args(argv)
+
+    auditor = YouTubeAuditor(token_file=args.token_file)
     auditor.get_channel_summary()
     auditor.list_pipeline()
     auditor.get_detailed_stats()
+
+
+if __name__ == "__main__":
+    main()

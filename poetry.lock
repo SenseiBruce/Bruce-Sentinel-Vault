@@ -1713,6 +1713,22 @@ pytest = ">=4.6"
 testing = ["fields", "hunter", "process-tests", "pytest-xdist", "virtualenv"]
 
 [[package]]
+name = "pytest-socket"
+version = "0.7.0"
+description = "Pytest Plugin to disable socket calls during tests"
+optional = false
+python-versions = ">=3.8,<4.0"
+groups = ["main", "dev"]
+files = [
+    {file = "pytest_socket-0.7.0-py3-none-any.whl", hash = "sha256:7e0f4642177d55d317bbd58fc68c6bd9048d6eadb2d46a89307fa9221336ce45"},
+    {file = "pytest_socket-0.7.0.tar.gz", hash = "sha256:71ab048cbbcb085c15a4423b73b619a8b35d6a307f46f78ea46be51b1b7e11b3"},
+]
+markers = {main = "extra == \"dev\""}
+
+[package.dependencies]
+pytest = ">=6.2.5"
+
+[[package]]
 name = "python-discovery"
 version = "1.5.2"
 description = "Python interpreter discovery"
@@ -2136,9 +2152,9 @@ files = [
 ]
 
 [extras]
-dev = ["mypy", "pip-audit", "pre-commit", "pytest", "pytest-cov", "ruff", "types-requests"]
+dev = ["mypy", "pip-audit", "pre-commit", "pytest", "pytest-cov", "pytest-socket", "ruff", "types-requests"]
 
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "c6aa2a7282c5ba6488ba62bb7389ceb8e5ea8e0ae08ffa30945e9e94146feb59"
+content-hash = "a4226b7db3cfa6f710a7221409bdc37c2216347aec674eaff33654b01103522e"

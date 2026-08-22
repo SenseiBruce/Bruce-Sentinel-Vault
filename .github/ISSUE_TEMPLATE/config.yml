@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/SenseiBruce/Bruce-Sentinel-Vault/security/advisories/new
+    about: Do not report security issues publicly. See SECURITY.md and open a private advisory.
+  - name: Contributing guide
+    url: https://github.com/SenseiBruce/Bruce-Sentinel-Vault/blob/main/CONTRIBUTING.md
+    about: How to propose changes and open pull requests.

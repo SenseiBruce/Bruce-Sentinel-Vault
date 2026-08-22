@@ -97,6 +97,23 @@ terraform validate
 terraform apply
 ```
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branch, test, and PR expectations.
+
+## Security
+
+Report vulnerabilities privately — see [SECURITY.md](SECURITY.md). Do not open
+public issues for credential leaks.
+
+## Changelog
+
+Release notes live in [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
 ## Project layout
 
 ```
@@ -113,3 +130,11 @@ terraform apply
 ├── Dockerfile
 └── .github/workflows/{ci.yml,terraform.yml}
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+See [LICENSE](LICENSE).

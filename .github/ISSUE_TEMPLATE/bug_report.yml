@@ -1,0 +1,30 @@
+name: Bug report
+description: Report a problem in Bruce Sentinel Vault
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Clear outline of the bug, steps to reproduce, and expected vs actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Commands, inputs, or a short snippet that demonstrates the issue. Include full traceback if there was an exception.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Python version and OS (and Docker/Terraform versions if relevant)
+      placeholder: "Python 3.12, macOS 15"
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      placeholder: 0.1.4 or git SHA

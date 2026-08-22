@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
+  and README links to contributing, security, changelog, and license.
+
 ## 0.1.4
 
 - Network-isolated pytest (`pytest-socket`) and coverage gate at 70%.

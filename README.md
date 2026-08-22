@@ -130,3 +130,11 @@ MIT — see [LICENSE](LICENSE).
 ├── Dockerfile
 └── .github/workflows/{ci.yml,terraform.yml}
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+See [LICENSE](LICENSE).

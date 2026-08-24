@@ -36,9 +36,7 @@ class FakeYouTube:
                         "viewCount": "50000",
                         "videoCount": "12",
                     },
-                    "contentDetails": {
-                        "relatedPlaylists": {"uploads": "UPLOADS"}
-                    },
+                    "contentDetails": {"relatedPlaylists": {"uploads": "UPLOADS"}},
                 }
             ]
         }
@@ -74,7 +72,6 @@ def test_get_channel_summary_with_injected_client():
 def test_list_pipeline_with_injected_client():
     class RichFake(FakeYouTube):
         def playlistItems(self):
-
             class Playlist:
                 def list(self, **kwargs):
                     return FakeExecute(
@@ -124,6 +121,23 @@ def test_build_report_and_json_cli(monkeypatch, capsys):
     class RichFake(FakeYouTube):
         def playlistItems(self):
 
+def test_filter_by_privacy_keeps_matching_rows():
+    from YouTubeAuditor import filter_by_privacy
+
+    rows = [
+        {"title": "A", "privacy": "public"},
+        {"title": "B", "privacy": "private"},
+        {"title": "C", "privacy": "unlisted"},
+        {"title": "D", "privacy": "PRIVATE"},
+    ]
+    assert [row["title"] for row in filter_by_privacy(rows, None)] == ["A", "B", "C", "D"]
+    assert [row["title"] for row in filter_by_privacy(rows, "private")] == ["B", "D"]
+    assert [row["title"] for row in filter_by_privacy(rows, "public")] == ["A"]
+
+
+def test_list_pipeline_privacy_filter():
+    class MixedFake(FakeYouTube):
+        def playlistItems(self):
             class Playlist:
                 def list(self, **kwargs):
                     return FakeExecute(
@@ -134,6 +148,15 @@ def test_build_report_and_json_cli(monkeypatch, capsys):
                                     "snippet": {"title": "Tax Explainer"},
                                     "status": {"privacyStatus": "public"},
                                 }
+                                    "contentDetails": {"videoId": "pub"},
+                                    "snippet": {"title": "Public Video"},
+                                    "status": {"privacyStatus": "public"},
+                                },
+                                {
+                                    "contentDetails": {"videoId": "priv"},
+                                    "snippet": {"title": "Private Video"},
+                                    "status": {"privacyStatus": "private"},
+                                },
                             ]
                         }
                     )
@@ -143,6 +166,8 @@ def test_build_report_and_json_cli(monkeypatch, capsys):
         def videos(self):
             class Videos:
                 def list(self, **kwargs):
+                    video_id = kwargs.get("id")
+                    privacy = "private" if video_id == "priv" else "public"
                     return FakeExecute(
                         {
                             "items": [
@@ -153,6 +178,11 @@ def test_build_report_and_json_cli(monkeypatch, capsys):
                                     },
                                     "snippet": {"title": "Tax Explainer"},
                                     "statistics": {"viewCount": "9", "likeCount": "2"},
+                                        "privacyStatus": privacy,
+                                        "publishAt": "N/A",
+                                    },
+                                    "snippet": {"title": "x"},
+                                    "statistics": {"viewCount": "1", "likeCount": "0"},
                                 }
                             ]
                         }
@@ -173,3 +203,8 @@ def test_build_report_and_json_cli(monkeypatch, capsys):
     auditor_main(["--json", "--max-results", "1"])
     payload = json.loads(capsys.readouterr().out)
     assert payload["channel"]["title"] == "Capital Architects"
+    auditor = YouTubeAuditor(youtube_client=MixedFake())
+    private_only = auditor.list_pipeline(max_results=10, privacy="private")
+    assert [row["video_id"] for row in private_only] == ["priv"]
+    stats = auditor.get_detailed_stats(max_results=10, privacy="public")
+    assert [row["video_id"] for row in stats] == ["pub"]

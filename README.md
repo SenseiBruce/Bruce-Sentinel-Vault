@@ -86,6 +86,7 @@ python health.py --format text
 python scripts/validate_scripts_json.py scripts.example.json
 python scripts/validate_news_json.py path/to/news.json
 python scripts/list_script_titles.py scripts.example.json
+python scripts/count_scripts.py scripts.example.json
 ```
 
 ## Docker Compose

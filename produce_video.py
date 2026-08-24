@@ -247,11 +247,28 @@ class VideoFactory:
         logger.info("Production complete: %s", new_name)
         return new_name
 
+    def list_scripts(self) -> list[dict]:
+        """Return a 1-based catalog of loaded scripts (no API calls)."""
+        catalog = []
+        for i, entry in enumerate(self.scripts, start=1):
+            catalog.append(
+                {
+                    "index": i,
+                    "project_name": entry.get("project_name", f"Video_{i}"),
+                    "scene_count": len(entry.get("scenes") or []),
+                }
+            )
+        return catalog
+
 
 def main(argv=None):
     configure_logging()
     parser = argparse.ArgumentParser(description="Professional Video Production Factory")
-    parser.add_argument("--index", type=int, required=True, help="Script index (1-based)")
+    parser.add_argument(
+        "--index",
+        type=int,
+        help="Script index (1-based). Required unless --list is set.",
+    )
     parser.add_argument(
         "--file",
         type=str,
@@ -263,9 +280,19 @@ def main(argv=None):
         action="store_true",
         help="Validate scripts and print plan without calling external APIs",
     )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="Print a JSON catalog of scripts (index, title, scene count) and exit",
+    )
     args = parser.parse_args(argv)
 
     factory = VideoFactory(args.file)
+    if args.list:
+        print(json.dumps(factory.list_scripts(), indent=2))
+        return
+    if args.index is None:
+        parser.error("--index is required unless --list is set")
     result = factory.produce(args.index, dry_run=args.dry_run)
     if args.dry_run:
         print(json.dumps(result, indent=2))

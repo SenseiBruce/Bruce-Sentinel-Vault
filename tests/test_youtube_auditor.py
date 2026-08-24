@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -115,3 +116,60 @@ def test_list_pipeline_with_injected_client():
     assert pipeline[0]["video_id"] == "abc"
     stats = auditor.get_detailed_stats(max_results=1)
     assert stats[0]["views"] == "9"
+
+
+def test_build_report_and_json_cli(monkeypatch, capsys):
+    from YouTubeAuditor import main as auditor_main
+
+    class RichFake(FakeYouTube):
+        def playlistItems(self):
+
+            class Playlist:
+                def list(self, **kwargs):
+                    return FakeExecute(
+                        {
+                            "items": [
+                                {
+                                    "contentDetails": {"videoId": "abc"},
+                                    "snippet": {"title": "Tax Explainer"},
+                                    "status": {"privacyStatus": "public"},
+                                }
+                            ]
+                        }
+                    )
+
+            return Playlist()
+
+        def videos(self):
+            class Videos:
+                def list(self, **kwargs):
+                    return FakeExecute(
+                        {
+                            "items": [
+                                {
+                                    "status": {
+                                        "privacyStatus": "public",
+                                        "publishAt": "N/A",
+                                    },
+                                    "snippet": {"title": "Tax Explainer"},
+                                    "statistics": {"viewCount": "9", "likeCount": "2"},
+                                }
+                            ]
+                        }
+                    )
+
+            return Videos()
+
+    auditor = YouTubeAuditor(youtube_client=RichFake())
+    report = auditor.build_report(max_results=1)
+    assert report["channel"]["title"] == "Capital Architects"
+    assert report["pipeline"][0]["video_id"] == "abc"
+    assert report["stats"][0]["views"] == "9"
+
+    monkeypatch.setattr(
+        "YouTubeAuditor.YouTubeAuditor",
+        lambda token_file=None, youtube_client=None: auditor,
+    )
+    auditor_main(["--json", "--max-results", "1"])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["channel"]["title"] == "Capital Architects"

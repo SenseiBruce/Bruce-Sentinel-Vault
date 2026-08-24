@@ -70,3 +70,36 @@ def test_video_factory_dry_run(tmp_path):
     assert plan["dry_run"] is True
     assert plan["scene_count"] == 1
 
+
+def test_video_factory_list_scripts(tmp_path):
+    path = tmp_path / "scripts.json"
+    path.write_text(
+        json.dumps(
+            [
+                {"project_name": "Alpha", "scenes": [{"narration": "a"}]},
+                {"project_name": "Beta", "scenes": []},
+            ]
+        ),
+        encoding="utf-8",
+    )
+    factory = VideoFactory(str(path), tts=object(), youtube_factory=lambda i, t: object())
+    catalog = factory.list_scripts()
+    assert catalog == [
+        {"index": 1, "project_name": "Alpha", "scene_count": 1},
+        {"index": 2, "project_name": "Beta", "scene_count": 0},
+    ]
+
+
+def test_produce_main_list_prints_json(tmp_path, capsys):
+    from produce_video import main as produce_main
+
+    path = tmp_path / "scripts.json"
+    path.write_text(
+        json.dumps([{"project_name": "Demo", "scenes": [{"narration": "a"}]}]),
+        encoding="utf-8",
+    )
+    produce_main(["--list", "--file", str(path)])
+    payload = json.loads(capsys.readouterr().out)
+    assert payload[0]["index"] == 1
+    assert payload[0]["project_name"] == "Demo"
+

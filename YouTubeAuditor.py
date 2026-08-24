@@ -153,6 +153,14 @@ class YouTubeAuditor:
             )
         return stats_rows
 
+    def build_report(self, max_results=10) -> dict[str, Any]:
+        """Collect channel, pipeline, and stats into one machine-readable report."""
+        return {
+            "channel": self.get_channel_summary(),
+            "pipeline": self.list_pipeline(max_results=max_results),
+            "stats": self.get_detailed_stats(max_results=max_results),
+        }
+
 
 def main(argv=None):
     configure_logging()
@@ -168,12 +176,17 @@ def main(argv=None):
         default=10,
         help="Max uploads to inspect for pipeline/stats",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a combined channel/pipeline/stats report as JSON",
+    )
     args = parser.parse_args(argv)
 
     auditor = YouTubeAuditor(token_file=args.token_file)
-    auditor.get_channel_summary()
-    auditor.list_pipeline(max_results=args.max_results)
-    auditor.get_detailed_stats(max_results=args.max_results)
+    report = auditor.build_report(max_results=args.max_results)
+    if args.json:
+        print(json.dumps(report, indent=2))
 
 
 if __name__ == "__main__":

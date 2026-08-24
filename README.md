@@ -71,8 +71,10 @@ every push. If a key was ever exposed, rotate it with the provider immediately.
 ## Run
 
 ```bash
+python produce_video.py --list --file scripts.example.json
 python produce_video.py --index 1 --file scripts.example.json
-python YouTubeAuditor.py --token-file ./youtube_token.json
+python produce_video.py --index 1 --dry-run --file scripts.example.json
+python YouTubeAuditor.py --token-file ./youtube_token.json --json
 python grader-agent/src/main.py
 python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
 python health.py

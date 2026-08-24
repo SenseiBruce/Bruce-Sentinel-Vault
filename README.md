@@ -78,6 +78,7 @@ python YouTubeAuditor.py --token-file ./youtube_token.json --json
 python YouTubeAuditor.py --token-file ./youtube_token.json
 python YouTubeAuditor.py --privacy private --max-results 20
 python grader-agent/src/main.py
+python grader-agent/src/main.py --format text
 python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
 python health.py
 python scripts/count_script_scenes.py scripts.example.json

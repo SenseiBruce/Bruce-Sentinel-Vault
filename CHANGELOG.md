@@ -12,6 +12,7 @@
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.
+- `scripts/list_script_titles.py` lists `project_name` values from a scripts JSON file.
 
 ## 0.1.4
 

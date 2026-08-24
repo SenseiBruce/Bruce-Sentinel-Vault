@@ -76,6 +76,7 @@ python YouTubeAuditor.py --token-file ./youtube_token.json
 python grader-agent/src/main.py
 python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
 python health.py
+python scripts/count_script_scenes.py scripts.example.json
 ```
 
 ## Docker Compose

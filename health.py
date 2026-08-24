@@ -43,8 +43,13 @@ def health_json(**kwargs: object) -> str:
     return json.dumps(asdict(build_health(**kwargs)), indent=2)  # type: ignore[arg-type]
 
 
-def health_text(status: HealthStatus | None = None, **kwargs: object) -> str:
-    payload = status or build_health(**kwargs)
+def health_text(
+    status: HealthStatus | None = None,
+    *,
+    scripts_file: str | None = None,
+    version: str | None = None,
+) -> str:
+    payload = status or build_health(scripts_file=scripts_file, version=version)
     lines = [
         f"status: {payload.status}",
         f"service: {payload.service}",

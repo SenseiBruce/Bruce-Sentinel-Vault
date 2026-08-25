@@ -9,6 +9,7 @@
 - Grader CLI `--format text` prints PASSED/FAILED verdicts (JSON file is still written).
 - `python scripts/validate_scripts_json.py` checks video-factory scripts JSON against the ScriptEntry schema.
 - `python scripts/validate_news_json.py` checks grader news JSON against the NewsItem schema.
+- CLI `scripts/list_image_prompts.py` lists scene `image_prompt` values from scripts JSON.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

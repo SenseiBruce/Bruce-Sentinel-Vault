@@ -12,6 +12,7 @@
 - CLI `scripts/list_image_prompts.py` lists scene `image_prompt` values from scripts JSON.
 - CLI `scripts/list_project_names.py` lists `project_name` values from scripts JSON.
 - CLI `scripts/list_narration_lines.py` lists scene narration text from scripts JSON.
+- `scripts/list_project_scene_counts.py` prints each project name with its scene count.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

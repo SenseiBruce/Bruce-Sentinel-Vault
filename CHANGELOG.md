@@ -15,6 +15,7 @@
 - `scripts/list_project_scene_counts.py` prints each project name with its scene count.
 - `scripts/list_scene_image_prompts.py` lists each scene `image_prompt`.
 - `scripts/total_image_prompts.py` counts non-empty scene `image_prompt` fields.
+- `scripts/count_projects.py` counts top-level project entries in scripts JSON.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

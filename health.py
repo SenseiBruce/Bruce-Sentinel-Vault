@@ -84,6 +84,9 @@ def main(argv: list[str] | None = None) -> int:
         print(health_text(status))
     else:
         print(json.dumps(asdict(status), indent=2))
+    args = parser.parse_args(argv)
+    status = build_health(scripts_file=args.scripts_file)
+    print(json.dumps(asdict(status), indent=2))
     if args.fail_on_degraded and status.status != "ok":
         return 1
     return 0

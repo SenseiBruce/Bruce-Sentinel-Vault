@@ -24,6 +24,8 @@
 - `scripts/list_script_titles.py` lists `project_name` values from a scripts JSON file.
 - `scripts/count_scripts.py` counts entries in a scripts JSON file.
 - `scripts/total_narration_words.py` counts narration words in a scripts JSON file.
+- `scripts/count_blank_prompts.py` counts scenes with a blank image prompt.
+  and README links to contributing, security, changelog, and license.
 
 ## 0.1.4
 

@@ -37,6 +37,9 @@ class FakeYouTube:
                         "videoCount": "12",
                     },
                     "contentDetails": {"relatedPlaylists": {"uploads": "UPLOADS"}},
+                    "contentDetails": {
+                        "relatedPlaylists": {"uploads": "UPLOADS"}
+                    },
                 }
             ]
         }
@@ -72,6 +75,7 @@ def test_get_channel_summary_with_injected_client():
 def test_list_pipeline_with_injected_client():
     class RichFake(FakeYouTube):
         def playlistItems(self):
+
             class Playlist:
                 def list(self, **kwargs):
                     return FakeExecute(

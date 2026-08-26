@@ -17,6 +17,7 @@
 - `scripts/total_image_prompts.py` counts non-empty scene `image_prompt` fields.
 - `scripts/count_projects.py` counts top-level project entries in scripts JSON.
 - `scripts/count_narrations.py` counts non-empty scene narration lines.
+- `scripts/count_empty_scenes.py` counts scenes with blank narration and image prompt.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

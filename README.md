@@ -83,6 +83,7 @@ python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shado
 python health.py
 python scripts/count_script_scenes.py scripts.example.json
 python health.py --format text
+python scripts/validate_scripts_json.py scripts.example.json
 ```
 
 ## Docker Compose

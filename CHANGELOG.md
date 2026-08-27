@@ -7,6 +7,7 @@
 - YouTube auditor `--privacy {public,private,unlisted}` filters pipeline and stats rows.
 - `health.py --format text` prints a key: value readiness report (JSON remains the default).
 - Grader CLI `--format text` prints PASSED/FAILED verdicts (JSON file is still written).
+- `python scripts/validate_scripts_json.py` checks video-factory scripts JSON against the ScriptEntry schema.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

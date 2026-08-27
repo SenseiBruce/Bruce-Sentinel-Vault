@@ -16,6 +16,16 @@ from sentinel_logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
+PRIVACY_CHOICES = ("public", "private", "unlisted")
+
+
+def filter_by_privacy(rows: list[dict[str, Any]], privacy: str | None) -> list[dict[str, Any]]:
+    """Return rows whose privacy status matches ``privacy`` (case-insensitive)."""
+    if not privacy:
+        return list(rows)
+    wanted = privacy.lower()
+    return [row for row in rows if str(row.get("privacy", "")).lower() == wanted]
+
 
 class TokenError(RuntimeError):
     """Raised when the YouTube OAuth token cannot be loaded."""
@@ -75,9 +85,7 @@ class YouTubeAuditor:
     def get_channel_summary(self):
         youtube = self._youtube()
         response = (
-            youtube.channels()
-            .list(part="snippet,contentDetails,statistics", mine=True)
-            .execute()
+            youtube.channels().list(part="snippet,contentDetails,statistics", mine=True).execute()
         )
 
         if not response.get("items"):
@@ -103,7 +111,7 @@ class YouTubeAuditor:
         )
         return summary
 
-    def list_pipeline(self, max_results=10):
+    def list_pipeline(self, max_results=10, privacy=None):
         youtube = self._youtube()
         pipeline = []
         for item in self._list_upload_items(max_results):
@@ -111,42 +119,46 @@ class YouTubeAuditor:
             title = item["snippet"]["title"]
             vid_res = youtube.videos().list(part="status,snippet", id=video_id).execute()
             status = vid_res["items"][0]["status"]
-            privacy = status["privacyStatus"]
+            status_privacy = status["privacyStatus"]
+            if privacy and status_privacy.lower() != privacy.lower():
+                continue
             pub_at = status.get("publishAt", "N/A")
             entry = {
                 "video_id": video_id,
                 "title": title,
-                "privacy": privacy,
+                "privacy": status_privacy,
                 "publish_at": pub_at,
             }
             pipeline.append(entry)
-            logger.info("[%s] %s", privacy.upper(), title[:50])
-            if privacy == "private" and pub_at != "N/A":
+            logger.info("[%s] %s", status_privacy.upper(), title[:50])
+            if status_privacy == "private" and pub_at != "N/A":
                 logger.info("Scheduled for: %s", pub_at)
-            elif privacy == "private":
+            elif status_privacy == "private":
                 logger.info("Manual release required")
         return pipeline
 
-    def get_detailed_stats(self, max_results=15):
+    def get_detailed_stats(self, max_results=15, privacy=None):
         youtube = self._youtube()
         stats_rows = []
         for item in self._list_upload_items(max_results):
             video_id = item["contentDetails"]["videoId"]
             title = item["snippet"]["title"]
-            privacy = item["status"]["privacyStatus"]
+            status_privacy = item["status"]["privacyStatus"]
+            if privacy and status_privacy.lower() != privacy.lower():
+                continue
             vid_res = youtube.videos().list(part="statistics", id=video_id).execute()
             stats = vid_res["items"][0].get("statistics", {})
             row = {
                 "video_id": video_id,
                 "title": title,
-                "privacy": privacy,
+                "privacy": status_privacy,
                 "views": stats.get("viewCount", "0"),
                 "likes": stats.get("likeCount", "0"),
             }
             stats_rows.append(row)
             logger.info(
                 "[%s] %s... | Views: %s | Likes: %s",
-                privacy.upper(),
+                status_privacy.upper(),
                 title[:40],
                 row["views"],
                 row["likes"],
@@ -180,6 +192,9 @@ def main(argv=None):
         "--json",
         action="store_true",
         help="Print a combined channel/pipeline/stats report as JSON",
+        "--privacy",
+        choices=PRIVACY_CHOICES,
+        help="Only include pipeline/stats rows with this privacy status",
     )
     args = parser.parse_args(argv)
 
@@ -187,6 +202,9 @@ def main(argv=None):
     report = auditor.build_report(max_results=args.max_results)
     if args.json:
         print(json.dumps(report, indent=2))
+    auditor.get_channel_summary()
+    auditor.list_pipeline(max_results=args.max_results, privacy=args.privacy)
+    auditor.get_detailed_stats(max_results=args.max_results, privacy=args.privacy)
 
 
 if __name__ == "__main__":

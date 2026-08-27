@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `produce_video.py --list` prints a JSON catalog of script indexes and titles.
+- `YouTubeAuditor.py --json` prints a combined channel/pipeline/stats report.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 

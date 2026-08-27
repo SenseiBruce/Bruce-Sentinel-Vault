@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `scripts/count_news_urls.py` counts HTTP(S) `url` values from a grader news JSON list.
 - `scripts/list_news_titles.py` lists `title` values from a grader news JSON list.
 - `produce_video.py --list` prints a JSON catalog of script indexes and titles.
 - `YouTubeAuditor.py --json` prints a combined channel/pipeline/stats report.

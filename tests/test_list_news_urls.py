@@ -1,0 +1,34 @@
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from list_news_urls import list_news_urls, main  # noqa: E402
+
+
+def test_extracts_http_urls():
+    payload = [
+        {"url": " https://example.com/a "},
+        {"url": "ftp://skip"},
+        {"url": ""},
+        "skip",
+        {"url": "http://example.com/b"},
+    ]
+    assert list_news_urls(payload) == ["https://example.com/a", "http://example.com/b"]
+
+
+def test_non_list():
+    assert list_news_urls({"url": "https://x"}) == []
+
+
+def test_cli_custom(tmp_path: Path, capsys):
+    path = tmp_path / "news.json"
+    path.write_text(json.dumps([{"url": "https://demo.test"}]), encoding="utf-8")
+    assert main([str(path)]) == 0
+    assert json.loads(capsys.readouterr().out)["urls"] == ["https://demo.test"]
+
+
+def test_missing(tmp_path: Path):
+    assert main([str(tmp_path / "missing.json")]) == 1

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `scripts/list_news_titles.py` lists `title` values from a grader news JSON list.
 - `produce_video.py --list` prints a JSON catalog of script indexes and titles.
 - `YouTubeAuditor.py --json` prints a combined channel/pipeline/stats report.
 - YouTube auditor `--privacy {public,private,unlisted}` filters pipeline and stats rows.

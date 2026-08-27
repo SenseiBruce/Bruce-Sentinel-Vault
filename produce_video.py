@@ -269,6 +269,7 @@ def main(argv=None):
         type=int,
         help="Script index (1-based). Required unless --list is set.",
     )
+    parser.add_argument("--index", type=int, required=True, help="Script index (1-based)")
     parser.add_argument(
         "--file",
         type=str,
@@ -293,6 +294,9 @@ def main(argv=None):
         return
     if args.index is None:
         parser.error("--index is required unless --list is set")
+    args = parser.parse_args(argv)
+
+    factory = VideoFactory(args.file)
     result = factory.produce(args.index, dry_run=args.dry_run)
     if args.dry_run:
         print(json.dumps(result, indent=2))

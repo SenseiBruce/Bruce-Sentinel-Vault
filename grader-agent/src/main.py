@@ -86,6 +86,9 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("Processing: %s", item["title"])
         status, reason = run_grader_logic("grade", item["title"], item.get("source", ""))
         h_status = run_grader_logic("check_hallucination", item["title"], item.get("source", ""))
+        h_status = run_grader_logic(
+            "check_hallucination", item["title"], item.get("source", "")
+        )
 
         if status == "YES" and h_status == "SAFE":
             logger.info("[Sentinel Verdict] PASSED: %s", reason)

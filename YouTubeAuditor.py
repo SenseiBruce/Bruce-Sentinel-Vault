@@ -86,6 +86,9 @@ class YouTubeAuditor:
         youtube = self._youtube()
         response = (
             youtube.channels().list(part="snippet,contentDetails,statistics", mine=True).execute()
+            youtube.channels()
+            .list(part="snippet,contentDetails,statistics", mine=True)
+            .execute()
         )
 
         if not response.get("items"):
@@ -112,6 +115,7 @@ class YouTubeAuditor:
         return summary
 
     def list_pipeline(self, max_results=10, privacy=None):
+    def list_pipeline(self, max_results=10):
         youtube = self._youtube()
         pipeline = []
         for item in self._list_upload_items(max_results):
@@ -122,6 +126,7 @@ class YouTubeAuditor:
             status_privacy = status["privacyStatus"]
             if privacy and status_privacy.lower() != privacy.lower():
                 continue
+            privacy = status["privacyStatus"]
             pub_at = status.get("publishAt", "N/A")
             entry = {
                 "video_id": video_id,
@@ -138,6 +143,18 @@ class YouTubeAuditor:
         return pipeline
 
     def get_detailed_stats(self, max_results=15, privacy=None):
+                "privacy": privacy,
+                "publish_at": pub_at,
+            }
+            pipeline.append(entry)
+            logger.info("[%s] %s", privacy.upper(), title[:50])
+            if privacy == "private" and pub_at != "N/A":
+                logger.info("Scheduled for: %s", pub_at)
+            elif privacy == "private":
+                logger.info("Manual release required")
+        return pipeline
+
+    def get_detailed_stats(self, max_results=15):
         youtube = self._youtube()
         stats_rows = []
         for item in self._list_upload_items(max_results):
@@ -146,12 +163,14 @@ class YouTubeAuditor:
             status_privacy = item["status"]["privacyStatus"]
             if privacy and status_privacy.lower() != privacy.lower():
                 continue
+            privacy = item["status"]["privacyStatus"]
             vid_res = youtube.videos().list(part="statistics", id=video_id).execute()
             stats = vid_res["items"][0].get("statistics", {})
             row = {
                 "video_id": video_id,
                 "title": title,
                 "privacy": status_privacy,
+                "privacy": privacy,
                 "views": stats.get("viewCount", "0"),
                 "likes": stats.get("likeCount", "0"),
             }
@@ -159,6 +178,7 @@ class YouTubeAuditor:
             logger.info(
                 "[%s] %s... | Views: %s | Likes: %s",
                 status_privacy.upper(),
+                privacy.upper(),
                 title[:40],
                 row["views"],
                 row["likes"],
@@ -205,6 +225,12 @@ def main(argv=None):
     auditor.get_channel_summary()
     auditor.list_pipeline(max_results=args.max_results, privacy=args.privacy)
     auditor.get_detailed_stats(max_results=args.max_results, privacy=args.privacy)
+    args = parser.parse_args(argv)
+
+    auditor = YouTubeAuditor(token_file=args.token_file)
+    auditor.get_channel_summary()
+    auditor.list_pipeline(max_results=args.max_results)
+    auditor.get_detailed_stats(max_results=args.max_results)
 
 
 if __name__ == "__main__":

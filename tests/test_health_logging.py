@@ -67,3 +67,7 @@ def test_health_cli_fail_on_degraded(tmp_path):
 
     assert main(["--scripts-file", "scripts.example.json"]) == 0
     assert main(["--scripts-file", str(tmp_path / "missing.json"), "--fail-on-degraded"]) == 1
+    assert (
+        main(["--scripts-file", str(tmp_path / "missing.json"), "--fail-on-degraded"])
+        == 1
+    )

@@ -16,6 +16,7 @@ to render a portable container workload for local/dev deploys.
 | Grader Agent | `grader-agent/` | Route finance news, grade claims, guard against hallucinations |
 | Shadow Coder | `shadow-coder/coder.py` | Local coding assistant backed by Ollama |
 | Health | `health.py` | Local readiness JSON or `--format text` for containers |
+| Health | `health.py` | Local readiness JSON for containers |
 | IaC | `terraform/` | Reusable workload module + root stack |
 
 ## Requirements
@@ -88,6 +89,11 @@ python scripts/validate_news_json.py path/to/news.json
 python scripts/list_script_titles.py scripts.example.json
 python scripts/count_scripts.py scripts.example.json
 python scripts/total_narration_words.py scripts.example.json
+python produce_video.py --index 1 --file scripts.example.json
+python YouTubeAuditor.py --token-file ./youtube_token.json
+python grader-agent/src/main.py
+python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
+python health.py
 ```
 
 ## Docker Compose

@@ -20,6 +20,7 @@
 - `scripts/count_empty_scenes.py` counts scenes with blank narration and image prompt.
 - `scripts/count_blank_narrations.py` counts scenes with a blank narration.
 - CLI `scripts/count_nonempty_narrations.py` counts scenes with a nonempty `narration`.
+- `scripts/count_nonempty_names.py` counts nonempty `project_name` values.
 - Open-source hygiene baseline: MIT LICENSE, EditorConfig, issue/PR templates,
   and README links to contributing, security, changelog, and license.
 - `scripts/count_script_scenes.py` counts scenes in a scripts JSON file.

@@ -15,7 +15,7 @@ to render a portable container workload for local/dev deploys.
 | YouTube Auditor | `YouTubeAuditor.py` | Summarize channel stats, upload pipeline, and per-video metrics |
 | Grader Agent | `grader-agent/` | Route finance news, grade claims, guard against hallucinations |
 | Shadow Coder | `shadow-coder/coder.py` | Local coding assistant backed by Ollama |
-| Health | `health.py` | Local readiness JSON for containers |
+| Health | `health.py` | Local readiness JSON or `--format text` for containers |
 | IaC | `terraform/` | Reusable workload module + root stack |
 
 ## Requirements
@@ -81,6 +81,7 @@ python grader-agent/src/main.py
 python shadow-coder/coder.py --task "Add a docstring to coder.py" --files "shadow-coder/coder.py"
 python health.py
 python scripts/count_script_scenes.py scripts.example.json
+python health.py --format text
 ```
 
 ## Docker Compose

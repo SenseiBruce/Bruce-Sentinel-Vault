@@ -43,6 +43,23 @@ def health_json(**kwargs: object) -> str:
     return json.dumps(asdict(build_health(**kwargs)), indent=2)  # type: ignore[arg-type]
 
 
+def health_text(
+    status: HealthStatus | None = None,
+    *,
+    scripts_file: str | None = None,
+    version: str | None = None,
+) -> str:
+    payload = status or build_health(scripts_file=scripts_file, version=version)
+    lines = [
+        f"status: {payload.status}",
+        f"service: {payload.service}",
+        f"version: {payload.version}",
+    ]
+    for name, value in payload.checks.items():
+        lines.append(f"{name}: {value}")
+    return "\n".join(lines)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Bruce Sentinel Vault health check")
     parser.add_argument(
@@ -55,9 +72,18 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Exit 1 when status is not ok (useful for container healthchecks)",
     )
+    parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="json",
+        help="json (default) or text",
+    )
     args = parser.parse_args(argv)
     status = build_health(scripts_file=args.scripts_file)
-    print(json.dumps(asdict(status), indent=2))
+    if args.format == "text":
+        print(health_text(status))
+    else:
+        print(json.dumps(asdict(status), indent=2))
     if args.fail_on_degraded and status.status != "ok":
         return 1
     return 0

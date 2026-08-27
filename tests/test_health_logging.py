@@ -38,6 +38,24 @@ def test_health_ok_with_example_scripts():
     assert '"status": "ok"' in health_json(scripts_file="scripts.example.json")
 
 
+def test_health_text_lists_checks():
+    from health import health_text
+
+    text = health_text(scripts_file="scripts.example.json")
+    assert "status: ok" in text
+    assert "scripts_file: ok" in text
+    assert "python: ok" in text
+
+
+def test_health_cli_text_format(capsys):
+    from health import main
+
+    assert main(["--scripts-file", "scripts.example.json", "--format", "text"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("status: ok")
+    assert "service: bruce-sentinel-vault" in out
+
+
 def test_health_version_from_env(monkeypatch):
     monkeypatch.setenv("SENTINEL_VERSION", "9.9.9")
     status = build_health(scripts_file="scripts.example.json")
@@ -48,7 +66,4 @@ def test_health_cli_fail_on_degraded(tmp_path):
     from health import main
 
     assert main(["--scripts-file", "scripts.example.json"]) == 0
-    assert (
-        main(["--scripts-file", str(tmp_path / "missing.json"), "--fail-on-degraded"])
-        == 1
-    )
+    assert main(["--scripts-file", str(tmp_path / "missing.json"), "--fail-on-degraded"]) == 1

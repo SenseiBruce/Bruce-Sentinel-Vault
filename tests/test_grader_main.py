@@ -39,3 +39,20 @@ def test_main_writes_output_with_mocked_logic(tmp_path: Path, monkeypatch):
     assert main_mod.main(["--input", "missing.json", "--output", str(out)]) == 0
     payload = json.loads(out.read_text(encoding="utf-8"))
     assert payload[0]["verdict"] == "PASSED"
+
+
+def test_main_text_format(tmp_path: Path, monkeypatch, capsys):
+    import main as main_mod
+
+    monkeypatch.setattr(
+        main_mod,
+        "run_grader_logic",
+        lambda task, data, source=None: (
+            [{"title": "RBI", "source": "x"}]
+            if task == "route"
+            else (("YES", "ok") if task == "grade" else "SAFE")
+        ),
+    )
+    out = tmp_path / "out.json"
+    assert main_mod.main(["--input", "missing.json", "--output", str(out), "--format", "text"]) == 0
+    assert "PASSED: RBI" in capsys.readouterr().out

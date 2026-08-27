@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+from grader_format import format_grader_text
 from graph import run_grader_logic
 from schemas import SchemaError, parse_news_items
 
@@ -64,6 +65,12 @@ def main(argv: list[str] | None = None) -> int:
         default="grader_results.json",
         help="Where to write verdict JSON",
     )
+    parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="json",
+        help="Print JSON (default) or a text verdict list to stdout",
+    )
     args = parser.parse_args(argv)
 
     metrics = MetricsRegistry()
@@ -78,9 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     for item in routed_items:
         logger.info("Processing: %s", item["title"])
         status, reason = run_grader_logic("grade", item["title"], item.get("source", ""))
-        h_status = run_grader_logic(
-            "check_hallucination", item["title"], item.get("source", "")
-        )
+        h_status = run_grader_logic("check_hallucination", item["title"], item.get("source", ""))
 
         if status == "YES" and h_status == "SAFE":
             logger.info("[Sentinel Verdict] PASSED: %s", reason)
@@ -92,6 +97,8 @@ def main(argv: list[str] | None = None) -> int:
             results.append({**item, "verdict": "FAILED"})
 
     write_results(args.output, results)
+    if args.format == "text":
+        print(format_grader_text(results))
     logger.info(
         "Scan complete. Results=%s metrics=%s",
         args.output,
